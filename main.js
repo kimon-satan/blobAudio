@@ -1,5 +1,6 @@
 var synth;
 var isUnlocked = false;
+var relfunc;
 
 window.addEventListener('touchstart', function() {
 
@@ -23,45 +24,47 @@ $(document).ready(function(){
     ctxt.fillStyle = "black";
     ctxt.fillRect(0,0,canvas.width, canvas.height);
 
-	var relfunc, wavetable = [];
-	
-	for( var i = 0; i < 514; i++)
-	{
-		wavetable.push(Math.random());
-	}
 
 	//synth.loadWaveTable(wavetable);
 
 	canvas.addEventListener("touchstart", function (e) {
 
-		if(!context)
-		{
-			init();
-		}
+		onset();
+
+	});
+
+	canvas.addEventListener("mousedown", function (e) {
 		
-		if(!synth)
-		{	
-			synth = new NoiseSynth();
-			synth.play();
-		}
-
-		clearInterval(relfunc);
-
-		synth.setFrequency(10);
-		//synth.setDelayAmount(0.5);
-		//synth.setDelayTime(1.5);
-		
-		synth.ramp(0.5, 500);
-
-		relfunc = setTimeout(function(){
-
-			synth.release(500);
-			synth = null;
-		}, 4000);
+		onset();
 
 	});
 
 });
+
+
+function onset(){
+
+	if(!synth)
+	{	
+		synth = new NoiseSynth();
+		synth.play();
+	}
+
+	clearInterval(relfunc);
+
+	//synth.setDelayAmount(0.5);
+	//synth.setDelayTime(1.5);
+	
+	synth.ramp(0.5, 500);
+
+	relfunc = setTimeout(function(){
+
+		synth.release(1000);
+		synth = null;
+
+	}, 4000);
+
+}
 
 //IOS workaround
 

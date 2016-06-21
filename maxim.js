@@ -6,8 +6,14 @@
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
+/*
+
+Hacked by Simon Katan 2016
+
+*/
 
 
 context = null;
@@ -316,7 +322,13 @@ Synth.prototype.ramp = function(amplitude, envTime) {
 Synth.prototype.release = function(releaseTime){
 
   this.ramp(0.0, releaseTime);
-  this.relfunc = window.setTimeout(function() {this.stop()}, (releaseTime + 20)/1000.);
+  clearInterval(this.relfunc);
+
+  this.relfunc = window.setTimeout(function() {
+
+  	this.stop()
+
+  }.bind(this), releaseTime);
 
 }
 
@@ -324,6 +336,7 @@ Synth.prototype.release = function(releaseTime){
 Synth.prototype.stop = function() {
   this.node.disconnect();
   this.isPlaying=false;
+  this.phase = 0;
 }
 
 Synth.prototype.setDelayTime = function(t) {
@@ -356,7 +369,9 @@ Synth.prototype.filterRamp = function(freq, envTime) {
 }
 
 NoiseSynth =function() {
+
   Synth.call(this);
+  this.frequency = 660;
 }
 
 NoiseSynth.prototype = new Synth();
@@ -368,27 +383,28 @@ NoiseSynth.prototype.process = function(audioContext) {
   var data_l = audioContext.outputBuffer.getChannelData(0);
   var data_r = audioContext.outputBuffer.getChannelData(1);
 
-  var phase = this.phase;
-  var interval = this.sample_rate/this.frequency; //number of samples
-  var vals = [];
+  var phase = this.phase; 
+
 
   for (var i = 0; i < data_l.length; i++) {
 
     phase += 1;
-    var amp = (phase%interval)/interval;
+
+
+    var remainder;
+    var wf_phase = phase * this.waveFormSize / (this.sample_rate / this.frequency);
+    wf_phase = Math.floor(wf_phase%this.waveFormSize);
+    var tone = this.wave[wf_phase];
+
+    var fphase = (phase * Math.PI * 2.0 * 0.1) + Math.PI * 1.5;
+    var freq =  Math.sin(fphase/this.sample_rate) * 3 + 10;
+    var interval = this.sample_rate/freq;
+    var amp = Math.pow((phase%interval)/interval,4);
     //vals.push(amp);
-    data_l[i]= -1.0 + (Math.random() * 2.0 ) * amp;
+    data_l[i]= tone * amp;
+    data_r[i]= data_l[i];
   } 
 
-
-  phase = this.phase;
-
-  for (var i = 0; i < data_r.length; i++) 
-  {
-    phase += 1;
-    var amp = (phase%interval)/interval;
-    data_r[i]= -1.0 + (Math.random() * 2.0 ) * amp;
-  } 
 
   this.phase = phase;
 }
