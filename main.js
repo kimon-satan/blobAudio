@@ -14,9 +14,6 @@ $(document).ready(function(){
 
 // Start off by initializing a new context.
 
-
-
-
 	canvas = $('#canvas')[0];
     canvas.setAttribute('width', window.innerWidth);
     canvas.setAttribute('height', window.innerHeight);
@@ -34,27 +31,39 @@ $(document).ready(function(){
 	});
 
 	canvas.addEventListener("mousedown", function (e) {
-		
+
 		onset();
 
 	});
 
+	function render(){
+
+			requestAnimationFrame(render);
+	}
+
+	render();
+
 });
+
+
 
 
 function onset(){
 
 	if(!synth)
-	{	
-		synth = new NoiseSynth();
+	{
+		synth = new ShudderSynth();
+		synth.frequency = linexp(Math.random(), 0, 1, 100, 1760, 2.0);
+		synth.setFilter(linexp(0.5, 0,1, 20,synth.frequency * 1.5, 3.0), 0.5);
 		synth.play();
+		synth.shudder = 0.5;
 	}
 
 	clearInterval(relfunc);
 
 	//synth.setDelayAmount(0.5);
 	//synth.setDelayTime(1.5);
-	
+
 	synth.ramp(0.5, 500);
 
 	relfunc = setTimeout(function(){
@@ -69,7 +78,7 @@ function onset(){
 //IOS workaround
 
 function unlock() {
-			
+
 	console.log("unlocking")
 
 	// create empty buffer and play it

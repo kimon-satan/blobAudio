@@ -411,3 +411,51 @@ NoiseSynth.prototype.process = function(audioContext) {
 
 //
 
+ShudderSynth =function() {
+
+  Synth.call(this);
+  this.frequency = 660;
+  this.shudder = 0;
+}
+
+ShudderSynth.prototype = new Synth();
+
+//This function is the waveform generator's buffer method
+//Hack here to create new waveforms
+ShudderSynth.prototype.process = function(audioContext) {
+
+  var data_l = audioContext.outputBuffer.getChannelData(0);
+  var data_r = audioContext.outputBuffer.getChannelData(1);
+
+  var carfreq =  linexp(this.shudder, 0, 1, this.frequency, this.frequency * 1.2, 2.0);
+  var amfreq = this.shudder * 6 + 3;
+
+  for (var i = 0; i < data_l.length; i++) {
+
+    this.phase += 1;
+
+    var fphase = this.phase * Math.PI * 2.0 * carfreq / this.sample_rate;
+    var car = Math.sin(fphase);
+ 
+    var amphase = this.phase * Math.PI * 2.0 * amfreq / this.sample_rate;
+    var amp = Math.sin(amphase) * 0.5 + 0.5;
+
+    //sounded worse with db
+    //var vol = linlin(this.shudder, 0, 1, -20, 0);
+    data_l[i]= car * amp * this.shudder;
+    data_r[i]= data_l[i];
+  } 
+
+  //console.log(this.shudder);
+}
+
+//
+
+ampdb = function(amp){
+  return 20 * Math.log10(amp);
+}
+
+dbamp = function(db){
+  return Math.pow(10,db/20);
+}
+
